@@ -20,8 +20,13 @@ object KafkaFileArchivesTest {
   val logger = LoggerFactory.getLogger("info")
 
   def main(args: Array[String]) {
-//    val sparkConf = new SparkConf().setAppName("KafkaWordCount").setMaster("local")
-  val sparkConf = new SparkConf()
+//    val sparkConf = new SparkConf().setAppName("KafkaWordCount").setMaster("local[3]")
+//    val filePath ="/Users/jiangnan/Downloads/ip.txt"
+//    val agezip = "/Users/jiangnan/Downloads/age"
+
+    val filePath ="ip.txt"
+    val agezip = "age.zip"
+    val sparkConf = new SparkConf()
 
 
     val ssc = new StreamingContext(sparkConf, Seconds(50))
@@ -34,8 +39,7 @@ object KafkaFileArchivesTest {
     var topic = args{3}
     topic = topic.trim()
 
-    val filePath ="ip.txt"
-    val agezip = "age.zip"
+
 
     val props = new Properties()
     props.load(new FileInputStream(filePath))
@@ -51,6 +55,10 @@ object KafkaFileArchivesTest {
           res.foreach {
             r: String =>
               val json = JSON.parseObject(r)
+              val age = agemap.get("age")
+              println("age:"+age)
+              println("jsonage:"+json.get("age")+"#")
+              println("equas:"+(age.get.equals(json.get("age")+"")))
               if(tt.equals(json.get("STATUS"))){
                 val userstatqusql = "insert into "+table+" (kafka_value) values (?)"
                 val userqustmt = connection.prepareStatement(userstatqusql);
@@ -66,11 +74,10 @@ object KafkaFileArchivesTest {
                   val userquCount = userqustmt.executeUpdate();
                 }
               }
-              var age = agemap.get("age")
-              println("age:"+age)
+
 
               if(age!=null){
-                if(age.equals(json.get("age"))){
+                if(age.get.equals(json.get("age")+"")){
                   val userstatqusql = "insert into "+table+" (kafka_value) values (?)"
                   val userqustmt = connection.prepareStatement(userstatqusql);
                   userqustmt.setString(1,r );
@@ -95,7 +102,7 @@ object KafkaFileArchivesTest {
 //    return 1;
   }
   def readDir(archives:String): mutable.HashMap[String, String] ={
-    val dir = new File(archives  )
+    val dir = new File(archives)
     val docs = scala.collection.mutable.HashMap[String, String]()
 
     for (f <- dir.listFiles()) yield {
@@ -107,9 +114,8 @@ object KafkaFileArchivesTest {
           if(array.length>0){
             println("array0:"+array{0}+"#")
             println("array1:"+array{1}+"#")
-            docs(array{0}.trim()) = array{1}.trim()
             println("array1:"+array{1}.trim()+"#")
-
+            docs(array{0}.trim()) = array{1}.trim()
           }
         }
       }
